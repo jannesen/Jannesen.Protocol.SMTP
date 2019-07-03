@@ -31,7 +31,6 @@ This is a very simple library to send emails using SMTP.
 | QUIT         | Send QUIT
 
 
-## TODO
-- async
-- TLS Support
+## Remark
+This code is more then 10 years old. Needs update to TLS and async.
 
