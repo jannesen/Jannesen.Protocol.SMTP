@@ -1,14 +1,15 @@
-﻿/*@
-    Copyright � Jannesen Holding B.V. 2008-2010.
-    Unautorised reproduction, distribution or reverse eniginering is prohibited.
-*/
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Runtime.Serialization;
+using System.Security.Permissions;
+
 
 namespace Jannesen.Protocol.SMTP
 {
-    public class SMTPResponse
+    [Serializable]
+    public sealed class SMTPResponse
     {
         public              int         Code            { get ; }
         public              string[]    Responses       { get ; }
@@ -60,11 +61,11 @@ namespace Jannesen.Protocol.SMTP
                     }
                     while (line.Length > 3 && line[3]=='-');
 
-                    Code      = int.Parse(line.Substring(0,3));
+                    Code      = int.Parse(line.Substring(0,3), System.Globalization.NumberStyles.Integer, CultureInfo.InvariantCulture);
                     Responses = ReadList.ToArray();
                 }
                 else {
-                    Code         = int.Parse(line.Substring(0,3));
+                    Code         = int.Parse(line.Substring(0,3), System.Globalization.NumberStyles.Integer, CultureInfo.InvariantCulture);
                     Responses    = new string[1];
                     Responses[0] = line;
                 }

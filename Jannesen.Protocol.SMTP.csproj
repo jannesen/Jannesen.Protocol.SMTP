@@ -31,8 +31,9 @@
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
+  <!-- Import CodeAnalysis if package exists in upper directory -->
+  <Import Condition="Exists($([MSBuild]::GetPathOfFileAbove('code-analysis-package.vsprops')))" Project="$([MSBuild]::GetPathOfFileAbove('code-analysis-package.vsprops'))" />
   <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>

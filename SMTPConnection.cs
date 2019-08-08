@@ -26,7 +26,7 @@ namespace Jannesen.Protocol.SMTP
             }
             set {
                 if (_tcpClient != null)
-                    new SMTPException("Not allowed to change LocalEndPoint after connection is made.");
+                    throw new SMTPException("Not allowed to change LocalEndPoint after connection is made.");
 
                 _localEndPoint = value;
             }
@@ -38,7 +38,7 @@ namespace Jannesen.Protocol.SMTP
             }
             set {
                 if (_tcpClient != null)
-                    new SMTPException("Not allowed to change RemoteEndPoint after connection is made.");
+                    throw new SMTPException("Not allowed to change RemoteEndPoint after connection is made.");
 
                 _remoteEndPoint = value;
             }
@@ -50,7 +50,7 @@ namespace Jannesen.Protocol.SMTP
             }
             set {
                 if (_tcpClient != null)
-                    new SMTPException("Not allowed to change ConnectTimeout after connection is made.");
+                    throw new SMTPException("Not allowed to change ConnectTimeout after connection is made.");
 
                 _connectTimeout = value;
             }
@@ -62,7 +62,7 @@ namespace Jannesen.Protocol.SMTP
             }
             set {
                 if (_tcpClient != null)
-                    new SMTPException("Not allowed to change Timeout after connection is made.");
+                    throw new SMTPException("Not allowed to change Timeout after connection is made.");
 
                 _timeout = value;
             }
@@ -166,10 +166,14 @@ namespace Jannesen.Protocol.SMTP
         }
         public              void                DATA(byte[] message)
         {
+            if (message is null) throw new ArgumentNullException(nameof(message));
+
             DATA(message, message.Length);
         }
         public              void                DATA(byte[] message, int length)
         {
+            if (message is null) throw new ArgumentNullException(nameof(message));
+
             _cmd("DATA", 354);
 
             Stream stream = new BufferedStream(_stream, 6000);
