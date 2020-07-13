@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <RunConfiguration>
+    <MaxCpuCount>1</MaxCpuCount>
+    <ResultsDirectory>%TEMP%\TestResults</ResultsDirectory>
+    <TargetFrameworkVersion>NetCoreApp,Version=3.1</TargetFrameworkVersion>
+    <TargetPlatform>x64</TargetPlatform>
+    <TestSessionTimeout>30000</TestSessionTimeout>
+  </RunConfiguration>
+
+  <MSTest>
+    <MapInconclusiveToFailed>true</MapInconclusiveToFailed>
+    <CaptureTraceOutput>true</CaptureTraceOutput>
+    <DeleteDeploymentDirectoryAfterTestRunIsComplete>true</DeleteDeploymentDirectoryAfterTestRunIsComplete>
+    <DeploymentEnabled>false</DeploymentEnabled>
+  </MSTest>
+</RunSettings>
