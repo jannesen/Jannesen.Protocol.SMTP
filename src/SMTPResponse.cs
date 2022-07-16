@@ -11,8 +11,8 @@ namespace Jannesen.Protocol.SMTP
     [Serializable]
     public sealed class SMTPResponse
     {
-        public  readonly    int         _code;
-        public  readonly    string[]    _responses;
+        private readonly    int         _code;
+        private readonly    string[]    _responses;
 
         public              int         Code            => _code;
         public              string[]    Responses       => _responses;

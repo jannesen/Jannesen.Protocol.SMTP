@@ -1,0 +1,28 @@
+
+[*.cs]
+# IDE1006: Naming Styles
+dotnet_diagnostic.IDE1006.severity = none
+
+# CA1014: Mark assemblies with CLSCompliant
+dotnet_diagnostic.CA1014.severity = none
+
+# CA1031: Do not catch general exception types
+dotnet_diagnostic.CA1031.severity = none
+
+# CA1032: Implement standard exception constructors
+dotnet_diagnostic.CA1032.severity = none
+
+# CA1508: 'response.Code != 250' is always 'true'. Remove or refactor the condition(s) to avoid dead code.
+dotnet_diagnostic.CA1508.severity = none
+
+# CA1707: Remove the underscores from member name Jannesen.Protocol.SMTP.SMTPConnection.EHLO_HELO_Async(string, System.Threading.CancellationToken)
+dotnet_diagnostic.CA1707.severity = none
+
+# CA1819: Properties should not return arrays
+dotnet_diagnostic.CA1819.severity = none
+
+# CA1849: 'Task<TResult>.Result' synchronously blocks. Use await instead.
+dotnet_diagnostic.CA1849.severity = none
+
+# CA2007: Consider calling ConfigureAwait on the awaited task
+dotnet_diagnostic.CA2007.severity = none
