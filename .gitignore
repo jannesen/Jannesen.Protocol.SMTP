@@ -2,3 +2,4 @@
 src/bin/*
 src/obj/*
 *.csproj.user
+/test/obj/
