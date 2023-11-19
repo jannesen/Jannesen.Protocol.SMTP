@@ -24,7 +24,7 @@ namespace Jannesen.Protocol.SMTP
         private             string                              _receiveString;
         private             List<string>                        _receiceLines;
         private volatile    TaskCompletionSource<SMTPResponse>  _receiceRespone;
-        private             object                              _lockObject;
+        private readonly    object                              _lockObject;
 
         public              IPEndPoint                          LocalEndPoint
         {
@@ -332,7 +332,7 @@ namespace Jannesen.Protocol.SMTP
             return response;
         }
 
-        private             Task                                _sendAsync(string cmd)
+        private             Task<object>                        _sendAsync(string cmd)
         {
 #if DEBUG
             System.Diagnostics.Debug.WriteLine("SMTP send: " + cmd);
@@ -340,7 +340,7 @@ namespace Jannesen.Protocol.SMTP
             var data = Encoding.ASCII.GetBytes(cmd + "\r\n");
             return _sendAsync(data, data.Length);
         }
-        private             Task                                _sendAsync(byte[] data, int length)
+        private             Task<object>                        _sendAsync(byte[] data, int length)
         {
             var task = _receiceRespone.Task;
             if (task.IsCompleted) {
