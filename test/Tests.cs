@@ -1,21 +1,18 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Globalization;
 using System.Threading;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Jannesen.Protocol.SMTP;
 
 namespace Jannesen.Protocol.SMTP.UnitTest
 {
     [TestClass]
     public class Tests
     {
-        private static  IPEndPoint      _remoteEndPoint = new IPEndPoint(IPAddress.Parse("192.168.203.4"), 25);
+        private static  readonly    IPEndPoint      _remoteEndPoint = new IPEndPoint(IPAddress.Parse("192.168.203.4"), 25);
 
         [TestMethod]
-        public  async   Task            OpenTest()
+        public  async               Task            OpenTest()
         {
             using (var connection = new SMTPConnection()) {
                 connection.RemoteEndPoint = _remoteEndPoint;
@@ -26,7 +23,7 @@ namespace Jannesen.Protocol.SMTP.UnitTest
         }
 
         [TestMethod]
-        public  async   Task            OpenTestTimeout()
+        public  async               Task            OpenTestTimeout()
         {
             var start = DateTime.UtcNow;
 
@@ -44,7 +41,7 @@ namespace Jannesen.Protocol.SMTP.UnitTest
         }
 
         [TestMethod]
-        public  async   Task            QuitTest()
+        public  async               Task            QuitTest()
         {
             using (var connection = new SMTPConnection()) {
                 connection.RemoteEndPoint = _remoteEndPoint;
@@ -55,7 +52,7 @@ namespace Jannesen.Protocol.SMTP.UnitTest
         }
 
         [TestMethod]
-        public  async   Task            SendTest()
+        public  async               Task            SendTest()
         {
             using (var timer = new CancellationTokenSource(30000)) {
                 using (var connection = new SMTPConnection()) {

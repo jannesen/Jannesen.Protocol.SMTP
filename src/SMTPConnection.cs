@@ -172,7 +172,7 @@ namespace Jannesen.Protocol.SMTP
 
         public      async   Task<SMTPResponse>                  EHLO_HELO_Async(string domain, CancellationToken cancellationToken)
         {
-            if (domain is null) throw new ArgumentNullException(nameof(domain));
+            ArgumentNullException.ThrowIfNull(domain);
 
             var response = await CmdAsync("EHLO " + domain, _timeout, cancellationToken);
 
@@ -188,43 +188,43 @@ namespace Jannesen.Protocol.SMTP
         }
         public              Task<SMTPResponse>                  HELO_Async(string domain, CancellationToken cancellationToken)
         {
-            if (domain is null) throw new ArgumentNullException(nameof(domain));
+            ArgumentNullException.ThrowIfNull(domain);
 
             return CmdAsyncAnd250("HELO " + domain, _timeout, cancellationToken);
         }
         public              Task<SMTPResponse>                  EHLO_Async(string domain, CancellationToken cancellationToken)
         {
-            if (domain is null) throw new ArgumentNullException(nameof(domain));
+            ArgumentNullException.ThrowIfNull(domain);
 
             return CmdAsyncAnd250("EHLO "+domain, _timeout, cancellationToken);
         }
         public              Task<SMTPResponse>                  MAIL_FROM_Async(string address, CancellationToken cancellationToken)
         {
-            if (address is null) throw new ArgumentNullException(nameof(address));
+            ArgumentNullException.ThrowIfNull(address);
 
             return CmdAsyncAnd250("MAIL FROM: <"+address+">", _timeout, cancellationToken);
         }
         public              Task<SMTPResponse>                  RCPT_TO_Async(string address, CancellationToken cancellationToken)
         {
-            if (address is null) throw new ArgumentNullException(nameof(address));
+            ArgumentNullException.ThrowIfNull(address);
 
             return CmdAsyncAnd250("RCPT TO: <"+address+">", _timeout, cancellationToken);
         }
         public              Task<SMTPResponse>                  DATA_Async(string message, CancellationToken cancellationToken)
         {
-            if (message is null) throw new ArgumentNullException(nameof(message));
+            ArgumentNullException.ThrowIfNull(message);
 
             return DATA_Async(Encoding.ASCII.GetBytes(message), cancellationToken);
         }
         public              Task<SMTPResponse>                  DATA_Async(byte[] message, CancellationToken cancellationToken)
         {
-            if (message is null) throw new ArgumentNullException(nameof(message));
+            ArgumentNullException.ThrowIfNull(message);
 
             return DATA_Async(message, message.Length, cancellationToken);
         }
         public      async   Task<SMTPResponse>                  DATA_Async(byte[] message, int length, CancellationToken cancellationToken)
         {
-            if (message is null) throw new ArgumentNullException(nameof(message));
+            ArgumentNullException.ThrowIfNull(message);
 
             using (var timeoutcts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken)) {
                 timeoutcts.CancelAfter(_timeout);
