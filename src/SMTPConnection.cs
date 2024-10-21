@@ -80,7 +80,7 @@ namespace Jannesen.Protocol.SMTP
         public              bool                                isConnected
         {
             get {
-                lock(_lockObject) { 
+                lock(_lockObject) {
                     return _socket != null && _socket.Connected;
                 }
             }
@@ -176,7 +176,7 @@ namespace Jannesen.Protocol.SMTP
 
             var response = await CmdAsync("EHLO " + domain, _timeout, cancellationToken);
 
-            if (response.Code != 250) { 
+            if (response.Code != 250) {
                 response = await CmdAsync("HELO " + domain, _timeout, cancellationToken);
             }
 
@@ -274,7 +274,7 @@ namespace Jannesen.Protocol.SMTP
                         buffer[bufferp++] = (byte)'\r';
                         buffer[bufferp++] = (byte)'\n';
 
-                        await _sendAsync(buffer, bufferp);                       
+                        await _sendAsync(buffer, bufferp);
 
                         response = await _readResponseAsync();
                         if (response.Code != 250) {

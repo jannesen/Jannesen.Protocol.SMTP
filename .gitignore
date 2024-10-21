@@ -1,5 +1,4 @@
 .vs/*
-src/bin/*
-src/obj/*
+*/bin/*
+*/obj/*
 *.csproj.user
-/test/obj/

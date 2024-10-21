@@ -57,7 +57,7 @@ namespace Jannesen.Protocol.SMTP.UnitTest
         [TestMethod]
         public  async   Task            SendTest()
         {
-            using (var timer = new CancellationTokenSource(30000)) { 
+            using (var timer = new CancellationTokenSource(30000)) {
                 using (var connection = new SMTPConnection()) {
                     connection.RemoteEndPoint = _remoteEndPoint;
                     connection.ConnectTimeout = 5000;

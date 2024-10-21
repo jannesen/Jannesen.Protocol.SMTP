@@ -1,4 +1,4 @@
-﻿# Jannesen.Protocol.SMPP
+# Jannesen.Protocol.SMPP
 
 This is a very simple library to send emails using SMTP.
 
@@ -33,4 +33,3 @@ This is a very simple library to send emails using SMTP.
 
 ## Remark
 This code is more then 10 years old. Needs update to TLS and async.
-
