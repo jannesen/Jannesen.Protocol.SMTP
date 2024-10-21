@@ -8,7 +8,7 @@
         <InvariantGlobalization>true</InvariantGlobalization>
         <Platforms>AnyCPU</Platforms>
 
-        <Nullable>disable</Nullable>
+        <Nullable>enable</Nullable>
 
         <IsTrimmable>True</IsTrimmable>
         <IsAotCompatible>True</IsAotCompatible>

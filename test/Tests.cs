@@ -9,7 +9,7 @@ namespace Jannesen.Protocol.SMTP.UnitTest
     [TestClass]
     public class Tests
     {
-        private static  readonly    IPEndPoint      _remoteEndPoint = new IPEndPoint(IPAddress.Parse("192.168.203.4"), 25);
+        private static  readonly    IPEndPoint      _remoteEndPoint = new IPEndPoint(IPAddress.Parse("192.168.202.22"), 25);
 
         [TestMethod]
         public  async               Task            OpenTest()
