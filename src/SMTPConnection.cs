@@ -107,7 +107,7 @@ namespace Jannesen.Protocol.SMTP
         {
             Close();
 #if DEBUG
-            System.Diagnostics.Debug.WriteLine("SMTP open: "+_remoteEndPoint.ToString());
+            System.Diagnostics.Debug.WriteLine("SMTP open: "+_remoteEndPoint!.ToString());
 #endif
             if (_remoteEndPoint == null) {
                 throw new InvalidOperationException("RemoteEndPoint is null.");
