@@ -31,7 +31,7 @@ namespace Jannesen.Protocol.SMTP
                 if (_responses.Length > 0) {
                     rtn = Responses[0];
 
-                    for(int i = 1 ; i < Responses.Length ; ++i)
+                    for(var i = 1 ; i < Responses.Length ; ++i)
                         rtn += "\r\n" + Responses[i];
                 }
                 else

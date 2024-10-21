@@ -12,7 +12,7 @@ namespace Jannesen.Protocol.SMTP
 {
     public sealed class SMTPConnection: IDisposable
     {
-        public      const   int                 DefaultPort = 25;
+        public      const   int                                 DefaultPort = 25;
 
         private             IPEndPoint                          _localEndPoint;
         private             IPEndPoint                          _remoteEndPoint;
@@ -247,8 +247,8 @@ namespace Jannesen.Protocol.SMTP
                         var bufferp = 0;
                         var prev    = (byte)'\n';
 
-                        for (int i = 0 ; i < length ; ++i) {
-                            byte chr = message[i];
+                        for (var i = 0 ; i < length ; ++i) {
+                            var chr = message[i];
 
                             if ((chr < ' ' || chr > 127) && chr != '\r' & chr != '\n' && chr != '\t')
                                 chr = (byte)'?';
