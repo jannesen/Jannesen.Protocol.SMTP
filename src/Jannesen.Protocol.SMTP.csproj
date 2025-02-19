@@ -4,7 +4,7 @@
         <AssemblyName>Jannesen.Protocol.SMTP</AssemblyName>
         
         <OutputType>Library</OutputType>
-        <TargetFramework>net80</TargetFramework>
+        <TargetFramework>net9</TargetFramework>
         <InvariantGlobalization>true</InvariantGlobalization>
         <Platforms>AnyCPU</Platforms>
 
