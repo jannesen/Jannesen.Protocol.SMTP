@@ -2,7 +2,7 @@
     <PropertyGroup>
         <RootNamespace>Jannesen.Protocol.SMTP</RootNamespace>
         <AssemblyName>Jannesen.Protocol.SMTP</AssemblyName>
-        
+
         <OutputType>Library</OutputType>
         <TargetFramework>net9</TargetFramework>
         <InvariantGlobalization>true</InvariantGlobalization>
