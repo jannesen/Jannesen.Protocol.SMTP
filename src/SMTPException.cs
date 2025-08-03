@@ -4,7 +4,7 @@ namespace Jannesen.Protocol.SMTP
 {
     public class SMTPException: Exception
     {
-        public                              SMTPException(string message) : base(message)
+        public                              SMTPException(string message): base(message)
         {
         }
 

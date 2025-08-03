@@ -8,7 +8,6 @@ using System.Security.Permissions;
 
 namespace Jannesen.Protocol.SMTP
 {
-    [Serializable]
     public sealed class SMTPResponse
     {
         private readonly    int         _code;
@@ -44,7 +43,7 @@ namespace Jannesen.Protocol.SMTP
         internal                        SMTPResponse(string[] responses)
         {
             _responses = responses;
-            var lastline = responses[responses.Length - 1];
+            var lastline = responses[^1];
             _code      = (lastline[0] - '0') * 100 +
                          (lastline[1] - '0') *  10 +
                          (lastline[2] - '0');
@@ -52,7 +51,7 @@ namespace Jannesen.Protocol.SMTP
 
         public  override    string      ToString()
         {
-            return _responses.Length > 0 ? _responses[_responses.Length - 1] : "Empty response.";
+            return _responses.Length > 0 ? _responses[^1] : "Empty response.";
         }
     }
 }

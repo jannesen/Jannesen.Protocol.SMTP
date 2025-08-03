@@ -24,7 +24,7 @@ namespace Jannesen.Protocol.SMTP
         private             string?                             _receiveString;
         private             List<string>                        _receiceLines;
         private volatile    TaskCompletionSource<SMTPResponse>  _receiceRespone;
-        private readonly    object                              _lockObject;
+        private readonly    Lock                                _lock;
 
         public              IPEndPoint?                         LocalEndPoint
         {
@@ -80,7 +80,7 @@ namespace Jannesen.Protocol.SMTP
         public              bool                                isConnected
         {
             get {
-                lock(_lockObject) {
+                lock(_lock) {
                     return _socket != null && _socket.Connected;
                 }
             }
@@ -90,7 +90,7 @@ namespace Jannesen.Protocol.SMTP
         {
             _timeout        = 60000;
             _connectTimeout = 15000;
-            _lockObject     = new object();
+            _lock           = new Lock();
 
             // Initialize in OpenAsync
             _receiveBuffer  = null!;
@@ -121,7 +121,7 @@ namespace Jannesen.Protocol.SMTP
 
             socket.NoDelay        = false;
 
-            lock(_lockObject) {
+            lock(_lock) {
                 _socket = socket;
             }
 
@@ -148,7 +148,7 @@ namespace Jannesen.Protocol.SMTP
 
                     await openTask.Task;
 
-                    lock(_lockObject) {
+                    lock(_lock) {
                         _receiveBuffer  = new byte[1024];
                         _receiveString  = null;
                         _receiceLines   = new List<string>();
@@ -168,7 +168,7 @@ namespace Jannesen.Protocol.SMTP
         {
             Socket? socket;
 
-            lock(_lockObject) {
+            lock(_lock) {
                 if ((socket = _socket) != null) {
                     _socket   = null;
                 }
@@ -233,12 +233,10 @@ namespace Jannesen.Protocol.SMTP
         {
             ArgumentNullException.ThrowIfNull(message);
 
-            return DATA_Async(message, message.Length, cancellationToken);
+            return DATA_Async(new ReadOnlyMemory<byte>(message), cancellationToken);
         }
-        public      async   Task<SMTPResponse>                  DATA_Async(byte[] message, int length, CancellationToken cancellationToken)
+        public      async   Task<SMTPResponse>                  DATA_Async(ReadOnlyMemory<byte> message, CancellationToken cancellationToken)
         {
-            ArgumentNullException.ThrowIfNull(message);
-
             using (var timeoutcts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken)) {
                 timeoutcts.CancelAfter(_timeout);
 
@@ -251,43 +249,56 @@ namespace Jannesen.Protocol.SMTP
                             throw new SMTPBadReplyException("SMTP Command 'DATA' failed to '" + _remoteEndPoint?.ToString() + "'. Response: " + response.ToString(), response);
                         }
 
-                        var bsize  = 0x1000;
-                        while (bsize < 0x40000 && bsize < length + 16) {
+                        var message_ptrx = message.Span;
+                        var bsize       = 0x1000;
+                        while (bsize < 0x10000 && bsize < message.Length + 8) {
                             bsize <<= 1;
                         }
 
-                        var buffer  = new byte[bsize + 8];
-                        var bufferp = 0;
-                        var prev    = (byte)'\n';
+                        var buffer      = new byte[bsize + 8];
+                        var buffer_pos  = 0;
+                        var message_pos = 0;
+                        var prev     = (byte)'\n';
 
-                        for (var i = 0 ; i < length ; ++i) {
-                            var chr = message[i];
+                        while (message_pos < message.Length) {
+                            {
+                                var message_ptr = message.Span;
+                                var buffer_ptr  = buffer.AsSpan();
 
-                            if ((chr < ' ' || chr > 127) && chr != '\r' & chr != '\n' && chr != '\t')
-                                chr = (byte)'?';
+                                while (message_pos < message.Length && buffer_pos < bsize) {
+                                    var chr = message_ptr[message_pos++];
 
-                            if (chr == '.' && prev == '\n') {
-                                buffer[bufferp++] = (byte)'.';
+                                    if ((chr < ' ' || chr > 127) && chr != '\r' & chr != '\n' && chr != '\t')
+                                        chr = (byte)'?';
+
+                                    if (chr == '.' && prev == '\n') {
+                                        buffer_ptr[buffer_pos++] = (byte)'.';
+                                    }
+
+                                    buffer_ptr[buffer_pos++] = prev = chr;
+                                }
                             }
 
-                            buffer[bufferp++] = prev = chr;
-
-                            if (bufferp >= bsize) {
-                                await _sendAsync(buffer, bufferp);
-                                bufferp = 0;
+                            if (buffer_pos >= bsize) {
+                                await _sendAsync(buffer, buffer_pos);
+                                buffer_pos = 0;
                             }
                         }
 
-                        if (length <= 2 || message[length - 2] != '\r' || message[length - 1] != '\n') {
-                            buffer[bufferp++] = (byte)'\r';
-                            buffer[bufferp++] = (byte)'\n';
+                        {
+                            var message_ptr = message.Span;
+                            var buffer_ptr = buffer.AsSpan();
+                            if (message.Length <= 2 || message_ptr[^2] != '\r' || message_ptr[^1] != '\n') {
+                                buffer_ptr[buffer_pos++] = (byte)'\r';
+                                buffer_ptr[buffer_pos++] = (byte)'\n';
+                            }
+
+                            buffer_ptr[buffer_pos++] = (byte)'.';
+                            buffer_ptr[buffer_pos++] = (byte)'\r';
+                            buffer_ptr[buffer_pos++] = (byte)'\n';
                         }
 
-                        buffer[bufferp++] = (byte)'.';
-                        buffer[bufferp++] = (byte)'\r';
-                        buffer[bufferp++] = (byte)'\n';
-
-                        await _sendAsync(buffer, bufferp);
+                        await _sendAsync(buffer, buffer_pos);
 
                         response = await _readResponseAsync();
                         if (response.Code != 250) {
@@ -368,7 +379,7 @@ namespace Jannesen.Protocol.SMTP
 
             Socket? socket;
 
-            lock(_lockObject) {
+            lock(_lock) {
                 socket = _socket;
             }
 
@@ -389,7 +400,7 @@ namespace Jannesen.Protocol.SMTP
                                      rtn.TrySetResult();
                                  }
                                  catch(Exception err) {
-                                    rtn.TrySetException(err);
+                                     rtn.TrySetException(err);
                                  }
                              },
                              null);
@@ -403,7 +414,7 @@ namespace Jannesen.Protocol.SMTP
             try {
                 var size = socket.EndReceive(ar);
                 if (size > 0) {
-                    lock(_lockObject) {
+                    lock(_lock) {
                         var r = Encoding.ASCII.GetString(_receiveBuffer, 0, size);
 
                         _receiveString = (_receiveString != null) ? _receiveString + r : r;
@@ -440,7 +451,7 @@ namespace Jannesen.Protocol.SMTP
 
             _lastResponse = response;
 
-            lock(_lockObject) {
+            lock(_lock) {
                 _receiceRespone = new TaskCompletionSource<SMTPResponse>();
             }
 
