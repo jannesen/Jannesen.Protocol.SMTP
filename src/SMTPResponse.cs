@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Runtime.Serialization;
-using System.Security.Permissions;
-
 
 namespace Jannesen.Protocol.SMTP
 {

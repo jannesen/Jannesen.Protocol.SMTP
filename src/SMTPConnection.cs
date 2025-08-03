@@ -1,23 +1,19 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Jannesen.Protocol.SMTP
 {
-    public sealed class SMTPConnection: IDisposable
+    public sealed partial class SMTPConnection: IDisposable
     {
-        public      const   int                                 DefaultPort = 25;
+        [GeneratedRegex(@"^[a-zA-Z0-9\.!#$%&'*+\-\/=?^_`{\|}\~]+@[a-zA-Z0-9-_.]+\.[a-zA-Z]{2,}$")]
+        private static partial Regex                               _emailValidator();
 
-        private             IPEndPoint?                         _localEndPoint;
-        private             IPEndPoint?                         _remoteEndPoint;
-        private             int                                 _connectTimeout;
-        private             int                                 _timeout;
         private             Socket?                             _socket;
         private volatile    SMTPResponse?                       _lastResponse;
         private             byte[]                              _receiveBuffer;
@@ -26,51 +22,12 @@ namespace Jannesen.Protocol.SMTP
         private volatile    TaskCompletionSource<SMTPResponse>  _receiceRespone;
         private readonly    Lock                                _lock;
 
-        public              IPEndPoint?                         LocalEndPoint
-        {
-            get {
-                return _localEndPoint;
-            }
-            set {
-                if (_socket != null)
-                    throw new SMTPException("Not allowed to change LocalEndPoint after connection is made.");
-
-                _localEndPoint = value;
-            }
-        }
-        public              IPEndPoint?                         RemoteEndPoint
-        {
-            get {
-                return _remoteEndPoint;
-            }
-            set {
-                if (_socket != null)
-                    throw new SMTPException("Not allowed to change RemoteEndPoint after connection is made.");
-
-                _remoteEndPoint = value;
-            }
-        }
-        public              int                                 ConnectTimeout
-        {
-            get {
-                return _connectTimeout;
-            }
-            set {
-                if (_socket != null)
-                    throw new SMTPException("Not allowed to change ConnectTimeout after connection is made.");
-
-                _connectTimeout = value;
-            }
-        }
-        public              int                                 Timeout
-        {
-            get {
-                return _timeout;
-            }
-            set {
-                _timeout = value;
-            }
-        }
+        public              IPEndPoint?                         LocalEndPoint               { get; init; }
+        public  required    IPEndPoint                          RemoteEndPoint              { get; init; }
+        public              int                                 ConnectTimeout              { get; init; }
+        public              int                                 Timeout                     { get; init; }
+        public              bool                                Idle                        { get; private set; }
+        public              int                                 MessageCount                { get; private set; }
         public              SMTPResponse?                       LastResponse
         {
             get {
@@ -88,9 +45,9 @@ namespace Jannesen.Protocol.SMTP
 
         public                                                  SMTPConnection()
         {
-            _timeout        = 60000;
-            _connectTimeout = 15000;
-            _lock           = new Lock();
+            Timeout        = 60000;
+            ConnectTimeout = 15000;
+            _lock          = new Lock();
 
             // Initialize in OpenAsync
             _receiveBuffer  = null!;
@@ -107,16 +64,12 @@ namespace Jannesen.Protocol.SMTP
         {
             Close();
 #if DEBUG
-            System.Diagnostics.Debug.WriteLine("SMTP open: "+_remoteEndPoint!.ToString());
+            System.Diagnostics.Debug.WriteLine("SMTP open: " + RemoteEndPoint.ToString());
 #endif
-            if (_remoteEndPoint == null) {
-                throw new InvalidOperationException("RemoteEndPoint is null.");
-            }
-
             var socket   = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
-            if (_localEndPoint != null) {
-                socket.Bind(_localEndPoint);
+            if (LocalEndPoint != null) {
+                socket.Bind(LocalEndPoint);
             }
 
             socket.NoDelay        = false;
@@ -134,8 +87,8 @@ namespace Jannesen.Protocol.SMTP
                 using (var t = new Timer((state) => {
                                     openTask.TrySetException(new TimeoutException());
                                     Close();
-                               }, null, _connectTimeout, 0)) {
-                    socket.BeginConnect(_remoteEndPoint, (ar) => {
+                               }, null, ConnectTimeout, 0)) {
+                    socket.BeginConnect(RemoteEndPoint, (ar) => {
                                             try {
                                                 socket.EndConnect(ar);
                                                 openTask.TrySetResult();
@@ -159,7 +112,7 @@ namespace Jannesen.Protocol.SMTP
 
                     var response = await _readResponseAsync();
                     if (response.Code != 220) {
-                        throw new SMTPBadReplyException("Received invalid welcom received from SMTP-server '" + _remoteEndPoint.ToString() + "'. Response: " + response.ToString(), response);
+                        throw new SMTPBadReplyException("Received invalid welcom received from SMTP-server '" + RemoteEndPoint.ToString() + "'. Response: " + response.ToString(), response);
                     }
                 }
             }
@@ -174,6 +127,8 @@ namespace Jannesen.Protocol.SMTP
                 }
             }
 
+            Idle = false;
+
             if (socket != null) {
                 try {
                     socket.Close();
@@ -183,45 +138,70 @@ namespace Jannesen.Protocol.SMTP
             }
         }
 
+        public      static  void                                ValidateEmailAddress(string address)
+        {
+            ArgumentNullException.ThrowIfNull(address);
+            if (!_emailValidator().IsMatch(address)) {
+                throw new SMTPBadEmailAddress("Invalid email address '" + address + "'.");
+            }
+        }
+
         public      async   Task<SMTPResponse>                  EHLO_HELO_Async(string domain, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(domain);
 
-            var response = await CmdAsync("EHLO " + domain, _timeout, cancellationToken);
+            var response = await CmdAsync("EHLO " + domain, Timeout, cancellationToken);
 
             if (response.Code != 250) {
-                response = await CmdAsync("HELO " + domain, _timeout, cancellationToken);
+                response = await CmdAsync("HELO " + domain, Timeout, cancellationToken);
             }
 
             if (response.Code != 250) {
-                throw new SMTPBadReplyException("SMTP Command 'HELO' failed to '" + _remoteEndPoint?.ToString() + "'. Response: " + response.ToString(), response);
+                throw new SMTPBadReplyException("SMTP Command 'HELO' failed to '" + RemoteEndPoint.ToString() + "'. Response: " + response.ToString(), response);
             }
+
+            Idle = true;
 
             return response;
         }
-        public              Task<SMTPResponse>                  HELO_Async(string domain, CancellationToken cancellationToken)
+        public      async   Task<SMTPResponse>                  HELO_Async(string domain, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(domain);
 
-            return CmdAsyncAnd250("HELO " + domain, _timeout, cancellationToken);
+            var response = await CmdAsyncAnd250("HELO " + domain, Timeout, cancellationToken);
+
+            Idle = true;
+
+            return response;
         }
-        public              Task<SMTPResponse>                  EHLO_Async(string domain, CancellationToken cancellationToken)
+        public      async   Task<SMTPResponse>                  EHLO_Async(string domain, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(domain);
 
-            return CmdAsyncAnd250("EHLO "+domain, _timeout, cancellationToken);
+            var response = await  CmdAsyncAnd250("EHLO "+domain, Timeout, cancellationToken);
+
+            Idle = true;
+
+            return response;
         }
         public              Task<SMTPResponse>                  MAIL_FROM_Async(string address, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(address);
-
-            return CmdAsyncAnd250("MAIL FROM: <"+address+">", _timeout, cancellationToken);
+            ValidateEmailAddress(address);
+            if (!Idle) {
+                throw new InvalidOperationException("SMTP Connection is not idle.");
+            }
+            Idle = false;
+            return CmdAsyncAnd250("MAIL FROM: <"+address+">", Timeout, cancellationToken);
         }
         public              Task<SMTPResponse>                  RCPT_TO_Async(string address, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(address);
-
-            return CmdAsyncAnd250("RCPT TO: <"+address+">", _timeout, cancellationToken);
+            ValidateEmailAddress(address);
+            if (Idle) {
+                throw new InvalidOperationException("SMTP Connection is idle.");
+            }
+            return CmdAsyncAnd250("RCPT TO: <"+address+">", Timeout, cancellationToken);
         }
         public              Task<SMTPResponse>                  DATA_Async(string message, CancellationToken cancellationToken)
         {
@@ -237,8 +217,14 @@ namespace Jannesen.Protocol.SMTP
         }
         public      async   Task<SMTPResponse>                  DATA_Async(ReadOnlyMemory<byte> message, CancellationToken cancellationToken)
         {
+            if (Idle) {
+                throw new InvalidOperationException("SMTP Connection is idle.");
+            }
+
+            ++MessageCount;
+
             using (var timeoutcts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken)) {
-                timeoutcts.CancelAfter(_timeout);
+                timeoutcts.CancelAfter(Timeout);
 
                 using (var x = timeoutcts.Token.Register(Dispose)) {
                     try {
@@ -246,7 +232,7 @@ namespace Jannesen.Protocol.SMTP
                         var response = await _readResponseAsync();
 
                         if (response.Code != 354) {
-                            throw new SMTPBadReplyException("SMTP Command 'DATA' failed to '" + _remoteEndPoint?.ToString() + "'. Response: " + response.ToString(), response);
+                            throw new SMTPBadReplyException("SMTP Command 'DATA' failed to '" + RemoteEndPoint.ToString() + "'. Response: " + response.ToString(), response);
                         }
 
                         var message_ptrx = message.Span;
@@ -302,8 +288,10 @@ namespace Jannesen.Protocol.SMTP
 
                         response = await _readResponseAsync();
                         if (response.Code != 250) {
-                            throw new SMTPBadReplyException("SMTP Command 'DATA' failed to '" + _remoteEndPoint?.ToString() + "'. Response: " + response.ToString(), response);
+                            throw new SMTPBadReplyException("SMTP Command 'DATA' failed to '" + RemoteEndPoint.ToString() + "'. Response: " + response.ToString(), response);
                         }
+
+                        Idle = true;
 
                         return response;
                     }
@@ -317,10 +305,11 @@ namespace Jannesen.Protocol.SMTP
         }
         public      async   Task<SMTPResponse>                  QUIT_Async(CancellationToken cancellationToken)
         {
-            var response = await CmdAsync("QUIT", _timeout, cancellationToken);
+            Idle = false;
+            var response = await CmdAsync("QUIT", Timeout, cancellationToken);
 
             if (response.Code != 221) {
-                throw new SMTPBadReplyException("SMTP Command 'QUIT' failed to '" + _remoteEndPoint?.ToString() + "'. Response: " + response.ToString(), response);
+                throw new SMTPBadReplyException("SMTP Command 'QUIT' failed to '" + RemoteEndPoint.ToString() + "'. Response: " + response.ToString(), response);
             }
 
             Close();
@@ -350,7 +339,7 @@ namespace Jannesen.Protocol.SMTP
             var response = await CmdAsync(cmd, timeout, cancellationToken);
 
             if (response.Code != 250) {
-                throw new SMTPBadReplyException("SMTP Command '" + cmd + "' failed to '" + _remoteEndPoint?.ToString() + "'. Response: " + response.ToString(), response);
+                throw new SMTPBadReplyException("SMTP Command '" + cmd + "' failed to '" + RemoteEndPoint.ToString() + "'. Response: " + response.ToString(), response);
             }
 
             return response;
@@ -374,7 +363,7 @@ namespace Jannesen.Protocol.SMTP
                 }
 
                 var response = _receiceRespone.Task.Result;
-                throw new SMTPUnexpectedReplyException("Unexpected data receive from SMTP-Server '" + _remoteEndPoint?.ToString() + "'. Response: " + response.ToString() , response);
+                throw new SMTPUnexpectedReplyException("Unexpected data receive from SMTP-Server '" + RemoteEndPoint.ToString() + "'. Response: " + response.ToString() , response);
             }
 
             Socket? socket;
@@ -388,7 +377,7 @@ namespace Jannesen.Protocol.SMTP
             }
 
             if (!socket.Connected) {
-                throw new SMTPException("smtp session is closed by remote.");
+                throw new SMTPConnectionClosedException();
             }
 
             var rtn    = new TaskCompletionSource();
@@ -400,7 +389,12 @@ namespace Jannesen.Protocol.SMTP
                                      rtn.TrySetResult();
                                  }
                                  catch(Exception err) {
-                                     rtn.TrySetException(err);
+                                     if (err is SocketException sockerr && sockerr.ErrorCode == 10054) {
+                                         rtn.TrySetException(new SMTPConnectionClosedException());
+                                     }
+                                     else {
+                                        rtn.TrySetException(err);
+                                     }
                                  }
                              },
                              null);
@@ -436,13 +430,18 @@ namespace Jannesen.Protocol.SMTP
                     }
                 }
                 else {
-                    throw new SMTPConnectionClosedException("SMTP Connection closed by remote.");
+                    throw new SMTPConnectionClosedException();
                 }
 
                 socket.BeginReceive(_receiveBuffer, 0, _receiveBuffer.Length, SocketFlags.None, _receiveCallback, socket);
             }
             catch(Exception err) {
-                _receiceRespone.TrySetException(err);
+                if (err is SocketException sockerr && sockerr.ErrorCode == 10054) {
+                    _receiceRespone.TrySetException(new SMTPConnectionClosedException());
+                }
+                else {
+                    _receiceRespone.TrySetException(err);
+                }
             }
         }
         private     async   Task<SMTPResponse>                  _readResponseAsync()

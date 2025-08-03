@@ -17,6 +17,13 @@ namespace Jannesen.Protocol.SMTP
 
     }
 
+    public class SMTPBadEmailAddress: SMTPException
+    {
+        public                              SMTPBadEmailAddress(string message): base(message)
+        {
+        }
+    }
+
     public class SMTPBadReplyException: SMTPException
     {
         public              SMTPResponse    Response            { get ; }
@@ -39,7 +46,7 @@ namespace Jannesen.Protocol.SMTP
 
     public class SMTPConnectionClosedException: SMTPException
     {
-        public                              SMTPConnectionClosedException(string message): base(message)
+        public                              SMTPConnectionClosedException(): base("SMTP Connection closed by remote.")
         {
         }
     }
