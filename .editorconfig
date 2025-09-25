@@ -1,11 +1,19 @@
 root = true
 
-[*.{cs,json,xml}]
+[*]
 end_of_line              = lf
-charset                  = utf-8-bom
+charset                  = utf-8
 indent_style             = space
 indent_size              = 4
 trim_trailing_whitespace = true
+
+[*.sln]
+end_of_line              = crlf
+indent_style             = tab
+charset                  = utf-8-bom
+
+[*.cs]
+charset                  = utf-8-bom
 
 [*.cs]
 # Use collection initializers or expressions (IDE0028)
