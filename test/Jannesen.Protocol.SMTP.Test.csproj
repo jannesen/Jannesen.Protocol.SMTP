@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net80</TargetFramework>
+        <TargetFramework>net9</TargetFramework>
         <IsPackable>false</IsPackable>
         <RunSettingsFilePath>$(MSBuildProjectDirectory)\test.runsettings</RunSettingsFilePath>
 
