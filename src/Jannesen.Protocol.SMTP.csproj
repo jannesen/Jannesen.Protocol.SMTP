@@ -12,9 +12,8 @@
 
         <IsTrimmable>True</IsTrimmable>
         <IsAotCompatible>True</IsAotCompatible>
-        <SignAssembly>True</SignAssembly>
-        <AssemblyOriginatorKeyFile>Jannesen.Protocol.SMTP.snk</AssemblyOriginatorKeyFile>
-        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 
         <Company>Jannesen B.V.</Company>
         <Version>2.00.01.000</Version>
