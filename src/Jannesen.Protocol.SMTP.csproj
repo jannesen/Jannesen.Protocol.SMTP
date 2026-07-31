@@ -4,7 +4,7 @@
         <AssemblyName>Jannesen.Protocol.SMTP</AssemblyName>
 
         <OutputType>Library</OutputType>
-        <TargetFramework>net9</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <InvariantGlobalization>true</InvariantGlobalization>
         <Platforms>AnyCPU</Platforms>
 
@@ -17,7 +17,7 @@
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 
         <Company>Jannesen B.V.</Company>
-        <Version>2.00.00.000</Version>
+        <Version>2.00.01.000</Version>
         <Authors>Peter Jannesen</Authors>
         <RepositoryUrl>https://github.com/jannesen/Jannesen.Protocol.SMTP</RepositoryUrl>
     </PropertyGroup>
